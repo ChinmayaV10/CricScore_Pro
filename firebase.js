@@ -14,6 +14,7 @@ deviceId: getDeviceId(),
 joinCode: null
 };
 
+// ── Load Firebase Config ───────────────────────
 function loadFBCfg() {
   try {
     var c = JSON.parse(localStorage.getItem('cs6fbcfg2') || 'null');
@@ -22,8 +23,12 @@ function loadFBCfg() {
       FB.projectId = c.projectId;
       initFirebase();
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("loadFBCfg error", e);
+  }
 }
+
+console.log("loadFBCfg exists:", typeof loadFBCfg);
 
 var app, db, auth;
 
