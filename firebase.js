@@ -14,6 +14,17 @@ deviceId: getDeviceId(),
 joinCode: null
 };
 
+function loadFBCfg() {
+  try {
+    var c = JSON.parse(localStorage.getItem('cs6fbcfg2') || 'null');
+    if (c && c.apiKey && c.projectId) {
+      FB.apiKey = c.apiKey;
+      FB.projectId = c.projectId;
+      initFirebase();
+    }
+  } catch (e) {}
+}
+
 var app, db, auth;
 
 // ── Device ID ───────────────────────────────────
@@ -48,7 +59,8 @@ FB.initialized = true;
 updateFBStatusUI();
 toast('Firebase connected ✓');
 } catch (e) {
-toast('Auth failed');
+  console.error(e);
+  toast('Auth failed: ' + e.message);
 }
 }
 
