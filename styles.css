@@ -95,3 +95,6 @@ table.sc td:first-child{text-align:left;max-width:100px;overflow:hidden;text-ove
 .bowled-extra-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
 .bowled-extra-btn{padding:14px 0;border-radius:11px;border:none;font-size:16px;font-weight:800;cursor:pointer;background:#1a1d28;color:#f0f2f8;border:1px solid rgba(255,255,255,.12)}
 .bowled-extra-btn:active{opacity:.7}
+
+/* ── Admin FAB ── */
+#admin-fab:hover{opacity:.7;background:rgba(255,255,255,.1)!important}

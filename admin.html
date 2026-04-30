@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0d0f14">
+<title>Admin Dashboard — CricScore Pro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0f14;--c:#1c2030;--bdr:rgba(255,255,255,.09);--g:#39ff7a;--b:#3b9eff;--r:#ff3b3b;--y:#f5c518;--p:#a855f7;--o:#ff8c00;--t:#f0f2f8;--t2:#8a90a8}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,sans-serif;min-height:100vh;padding:0}
+/* ── Header ── */
+.header{background:rgba(255,255,255,.04);border-bottom:1px solid var(--bdr);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px;font-weight:800;color:var(--g)}
+.header-right{display:flex;align-items:center;gap:10px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--g);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ── Layout ── */
+.wrap{max-width:1000px;margin:0 auto;padding:20px}
+/* ── Stat cards ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:14px;padding:14px;text-align:center}
+.stat-n{font-size:28px;font-weight:800;margin-bottom:2px}
+.stat-l{font-size:11px;color:var(--t2);font-weight:600}
+/* ── Filter bar ── */
+.filterbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.fbtn{padding:7px 16px;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--t2);font-size:12px;font-weight:700;cursor:pointer}
+.fbtn.on{background:var(--g);color:#000;border-color:var(--g)}
+.fbtn:active{opacity:.75}
+/* ── Search ── */
+.search-bar{display:flex;gap:8px;margin-bottom:16px}
+.search-bar input{flex:1;background:var(--c);border:1px solid var(--bdr);color:var(--t);border-radius:10px;padding:9px 14px;font-size:13px;outline:none}
+.search-bar input:focus{border-color:var(--g)}
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--bdr)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
+thead{background:rgba(255,255,255,.05)}
+th{padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bdr);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.03)}
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.live{background:rgba(57,255,122,.12);color:var(--g);border:1px solid rgba(57,255,122,.3)}
+.done{background:rgba(255,255,255,.07);color:var(--t2);border:1px solid var(--bdr)}
+/* ── Action buttons ── */
+.act{display:flex;gap:6px}
+.abtn{padding:5px 12px;border-radius:8px;border:none;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.abtn:active{opacity:.7}
+.abtn-r{background:rgba(255,59,59,.15);color:var(--r);border:1px solid rgba(255,59,59,.3)}
+.abtn-b{background:rgba(59,158,255,.15);color:var(--b);border:1px solid rgba(59,158,255,.3)}
+/* ── Detail modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal{background:#1c2030;border:1px solid var(--bdr);border-radius:20px;padding:24px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:800;margin-bottom:16px}
+.drow{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px}
+.drow:last-child{border-bottom:none}
+.drow-l{color:var(--t2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;margin-right:12px;padding-top:1px}
+.drow-v{font-weight:600;text-align:right;word-break:break-all}
+/* ── Buttons ── */
+.btn{display:inline-block;padding:10px 20px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer}
+.btn-g{background:var(--g);color:#000}
+.btn-h{background:transparent;border:1px solid var(--bdr);color:var(--t2)}
+.btn:active{opacity:.75}
+/* ── Empty / Loading ── */
+.empty{text-align:center;padding:40px 20px;color:var(--t2);font-size:14px}
+.loading{text-align:center;padding:30px;color:var(--t2);font-size:13px}
+/* ── Refresh bar ── */
+.rbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:12px;color:var(--t2)}
+.rbtn{background:rgba(57,255,122,.1);color:var(--g);border:1px solid rgba(57,255,122,.3);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer}
+/* ── Toast ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(13,15,20,.97);border:1px solid rgba(255,255,255,.15);color:var(--t);padding:8px 20px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="live-dot" id="live-dot" style="background:var(--t2)"></div>
+    <h1>CricScore Admin</h1>
+  </div>
+  <div class="header-right">
+    <span id="hdr-count" style="font-size:12px;color:var(--t2)"></span>
+    <button class="btn btn-h" onclick="goHome()" style="font-size:12px;padding:7px 14px">← Back to App</button>
+    <button class="btn btn-h" onclick="doLogout()" style="font-size:12px;padding:7px 14px;color:var(--r)">Logout</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Stats row -->
+  <div class="stats" id="stats-row">
+    <div class="stat"><div class="stat-n" id="st-total" style="color:var(--b)">—</div><div class="stat-l">Total Matches</div></div>
+    <div class="stat"><div class="stat-n" id="st-live"  style="color:var(--g)">—</div><div class="stat-l">Live Now</div></div>
+    <div class="stat"><div class="stat-n" id="st-done"  style="color:var(--t2)">—</div><div class="stat-l">Completed</div></div>
+    <div class="stat"><div class="stat-n" id="st-today" style="color:var(--y)">—</div><div class="stat-l">Today</div></div>
+  </div>
+
+  <!-- Refresh + last update -->
+  <div class="rbar">
+    <button class="rbtn" onclick="fetchMatches()">↻ Refresh</button>
+    <span id="last-upd"></span>
+    <span id="auto-lbl" style="margin-left:auto;color:rgba(57,255,122,.6);font-size:11px">● auto-updating every 5s</span>
+  </div>
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input id="search" placeholder="Search teams, join code…" oninput="applyFilter()">
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="filterbar">
+    <button class="fbtn on" id="f-all"  onclick="setFilter('all')">All Matches</button>
+    <button class="fbtn"    id="f-live" onclick="setFilter('live')">🟢 Live</button>
+    <button class="fbtn"    id="f-done" onclick="setFilter('completed')">✓ Completed</button>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Teams</th>
+          <th>Score</th>
+          <th>Overs</th>
+          <th>Join Code</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" class="loading">Loading matches…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail modal -->
+<div class="modal-bg" id="detail-modal" onclick="closeDetail(event)">
+  <div class="modal">
+    <h2>Match Details</h2>
+    <div id="detail-body"></div>
+    <div style="margin-top:18px;display:flex;gap:10px">
+      <button class="btn btn-h" onclick="hideDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Firebase config (same as main app) ───────────
+var _FB_API_KEY    = 'AIzaSyCLCEne8x6emwB5RSeDWOHlFENxbIYXFZo';
+var _FB_PROJECT_ID = 'cricscore-pro-61bce';
+var BASE = 'https://firestore.googleapis.com/v1/projects/' + _FB_PROJECT_ID + '/databases/(default)/documents';
+
+// ── Auth guard ────────────────────────────────────
+(function() {
+  var auth = sessionStorage.getItem('cs_admin_auth');
+  var ts   = parseInt(sessionStorage.getItem('cs_admin_ts') || '0');
+  if (auth !== '1' || Date.now() - ts > 7200000) {
+    window.location.href = 'admin-login.html';
+  }
+})();
+
+// ── State ─────────────────────────────────────────
+var allMatches = [];
+var activeFilter = 'all';
+var pollTimer = null;
+
+// ── Navigation ────────────────────────────────────
+function goHome()   { window.location.href = 'index.html'; }
+function doLogout() {
+  sessionStorage.removeItem('cs_admin_auth');
+  sessionStorage.removeItem('cs_admin_ts');
+  window.location.href = 'admin-login.html';
+}
+
+// ── Toast ─────────────────────────────────────────
+var _tT;
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.style.opacity = '1';
+  clearTimeout(_tT); _tT = setTimeout(function(){ el.style.opacity='0'; }, 2500);
+}
+
+// ── Firestore REST ────────────────────────────────
+function fsGetAll(collection, cb) {
+  fetch(BASE + '/' + collection + '?pageSize=200&key=' + _FB_API_KEY)
+    .then(function(r){ return r.json(); })
+    .then(function(d){ cb(d && d.documents ? d.documents : []); })
+    .catch(function(){ cb([]); });
+}
+function fsDelete(docPath, cb) {
+  fetch(BASE + '/' + docPath + '?key=' + _FB_API_KEY, { method: 'DELETE' })
+    .then(function(){ cb(true); }).catch(function(){ cb(false); });
+}
+function fromFSDoc(doc) {
+  if (!doc || !doc.fields) return null;
+  var out = {}; var f = doc.fields;
+  Object.keys(f).forEach(function(k) { out[k] = fromFSVal(f[k]); });
+  out._id = doc.name ? doc.name.split('/').pop() : '';
+  out._name = doc.name || '';
+  return out;
+}
+function fromFSVal(v) {
+  if (!v) return null;
+  if ('stringValue'    in v) return v.stringValue;
+  if ('integerValue'   in v) return parseInt(v.integerValue);
+  if ('doubleValue'    in v) return v.doubleValue;
+  if ('booleanValue'   in v) return v.booleanValue;
+  if ('nullValue'      in v) return null;
+  if ('timestampValue' in v) return v.timestampValue;
+  if ('arrayValue'     in v) return (v.arrayValue.values||[]).map(fromFSVal);
+  if ('mapValue'       in v) {
+    var o={}; Object.keys(v.mapValue.fields||{}).forEach(function(k){ o[k]=fromFSVal(v.mapValue.fields[k]); }); return o;
+  }
+  return null;
+}
+
+// ── Fetch + render ────────────────────────────────
+function fetchMatches() {
+  fsGetAll('matches', function(docs) {
+    allMatches = docs.map(fromFSDoc).filter(Boolean);
+    allMatches.sort(function(a,b){
+      var ta = a.createdAt || '', tb = b.createdAt || '';
+      return ta < tb ? 1 : ta > tb ? -1 : 0;
+    });
+    updateStats();
+    applyFilter();
+    document.getElementById('last-upd').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    var dot = document.getElementById('live-dot');
+    dot.style.background = '#39ff7a';
+  });
+}
+
+function updateStats() {
+  var live  = allMatches.filter(function(m){ return m.status==='live'; }).length;
+  var done  = allMatches.filter(function(m){ return m.status==='completed'; }).length;
+  var today = allMatches.filter(function(m){
+    if (!m.createdAt) return false;
+    return m.createdAt.slice(0,10) === new Date().toISOString().slice(0,10);
+  }).length;
+  document.getElementById('st-total').textContent = allMatches.length;
+  document.getElementById('st-live').textContent  = live;
+  document.getElementById('st-done').textContent  = done;
+  document.getElementById('st-today').textContent = today;
+  document.getElementById('hdr-count').textContent = allMatches.length + ' match' + (allMatches.length!==1?'es':'');
+}
+
+// ── Filter + search ───────────────────────────────
+function setFilter(f) {
+  activeFilter = f;
+  ['all','live','done'].forEach(function(k){
+    var el = document.getElementById('f-'+k);
+    if (el) el.classList.toggle('on', k===f || (k==='done' && f==='completed'));
+  });
+  // Fix button ids
+  document.getElementById('f-all').classList.toggle('on', f==='all');
+  document.getElementById('f-live').classList.toggle('on', f==='live');
+  document.getElementById('f-done').classList.toggle('on', f==='completed');
+  applyFilter();
+}
+
+function applyFilter() {
+  var q = (document.getElementById('search').value || '').toLowerCase();
+  var list = allMatches.filter(function(m) {
+    if (activeFilter !== 'all' && m.status !== activeFilter) return false;
+    if (q) {
+      var hay = ((m.teams||'') + ' ' + (m.joinCode||'')).toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+  renderTable(list);
+}
+
+// ── Render table ──────────────────────────────────
+function renderTable(list) {
+  var tbody = document.getElementById('tbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No matches found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(m) {
+    var isLive = m.status === 'live';
+    var badge  = isLive
+      ? '<span class="badge live"><span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block"></span>LIVE</span>'
+      : '<span class="badge done">✓ Done</span>';
+    var created = m.createdAt ? formatDate(m.createdAt) : '—';
+    var code = m.joinCode ? ('<b style="letter-spacing:2px;color:var(--b)">' + esc(m.joinCode) + '</b>') : '—';
+    return '<tr>'
+      + '<td style="font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(m.teams||'—') + '</td>'
+      + '<td style="font-weight:700;color:var(--g)">' + esc(m.score||'—') + '</td>'
+      + '<td>' + esc(m.overs||'—') + '</td>'
+      + '<td>' + code + '</td>'
+      + '<td>' + badge + '</td>'
+      + '<td style="font-size:11px;color:var(--t2)">' + created + '</td>'
+      + '<td><div class="act">'
+        + '<button class="abtn abtn-b" onclick="showDetail(\'' + esc(m._id) + '\')">Details</button>'
+        + '<button class="abtn abtn-r" onclick="deleteMatch(\'' + esc(m._id) + '\',\'' + esc(m.teams||'Match') + '\')">Delete</button>'
+      + '</div></td>'
+      + '</tr>';
+  }).join('');
+}
+
+// ── Delete ────────────────────────────────────────
+function deleteMatch(id, label) {
+  if (!confirm('Delete match: ' + label + '?\n\nThis cannot be undone.')) return;
+  fsDelete('matches/' + id, function(ok) {
+    if (ok) {
+      toast('Match deleted');
+      allMatches = allMatches.filter(function(m){ return m._id !== id; });
+      updateStats(); applyFilter();
+    } else {
+      toast('❌ Delete failed — check Firebase');
+    }
+  });
+}
+
+// ── Detail modal ──────────────────────────────────
+function showDetail(id) {
+  var m = allMatches.find(function(x){ return x._id === id; });
+  if (!m) return;
+  var rows = [
+    ['Teams',      m.teams || '—'],
+    ['Score',      m.score || '—'],
+    ['Overs',      m.overs || '—'],
+    ['Join Code',  m.joinCode || '—'],
+    ['Status',     m.status || '—'],
+    ['Created',    m.createdAt ? new Date(m.createdAt).toLocaleString() : '—'],
+    ['Updated',    m.lastUpdated ? new Date(m.lastUpdated).toLocaleString() : '—'],
+    ['Host ID',    m.hostId || '—'],
+    ['Match ID',   m._id || '—']
+  ];
+  document.getElementById('detail-body').innerHTML = rows.map(function(r) {
+    return '<div class="drow"><div class="drow-l">' + esc(r[0]) + '</div>'
+         + '<div class="drow-v">' + esc(r[1]) + '</div></div>';
+  }).join('');
+  document.getElementById('detail-modal').style.display = 'flex';
+}
+function hideDetail() { document.getElementById('detail-modal').style.display = 'none'; }
+function closeDetail(e) { if (e.target === document.getElementById('detail-modal')) hideDetail(); }
+
+// ── Helpers ───────────────────────────────────────
+function formatDate(iso) {
+  try {
+    var d = new Date(iso), now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return d.toLocaleDateString([], {month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  } catch(e) { return iso || '—'; }
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Auto-poll every 5 seconds ─────────────────────
+function startPolling() {
+  fetchMatches();
+  pollTimer = setInterval(fetchMatches, 5000);
+}
+
+// ── Start ─────────────────────────────────────────
+startPolling();
+</script>
+</body>
+</html>

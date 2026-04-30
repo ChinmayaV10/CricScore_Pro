@@ -7,6 +7,12 @@
 <meta name="theme-color" content="#0d0f14">
 <title>CricScore Pro</title>
 <link rel="stylesheet" href="styles.css">
+<script defer src="state.js"></script>
+<script defer src="firebase.js"></script>
+<script defer src="timers.js"></script>
+<script defer src="scoring.js"></script>
+<script defer src="render.js"></script>
+<script defer src="main.js"></script>
 </head>
 <body>
 <div id="app">
@@ -17,7 +23,11 @@
   <div style="text-align:center;margin-bottom:28px">
     <div style="font-size:30px;font-weight:800;color:var(--g)">CricScore Pro</div>
     <div style="font-size:12px;color:var(--t2);margin-top:3px">Professional cricket scorer</div>
-    <div id="fb-home-status" style="font-size:11px;color:var(--g);margin-top:6px;display:none">Firebase connected ✓</div>
+    <!-- silent Firebase status dot — not a setup button -->
+    <div style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;opacity:.5">
+      <div id="fb-dot" style="width:6px;height:6px;border-radius:50%;background:#444;transition:background .4s"></div>
+      <span style="font-size:10px;color:var(--t2)">live sync</span>
+    </div>
   </div>
   <button class="hbtn" onclick="goSetup()">
     <div class="hico" style="background:rgba(57,255,122,.12)">🏏</div>
@@ -34,10 +44,6 @@
   <button class="hbtn" onclick="showOv('ov-join')">
     <div class="hico" style="background:rgba(168,85,247,.12)">👁️</div>
     <div><div style="font-size:15px;font-weight:700">Join as Viewer</div><div style="font-size:11px;color:var(--t2);margin-top:2px">Watch a live match in real-time</div></div>
-  </button>
-  <button class="hbtn" onclick="goPage('pg-fb')">
-    <div class="hico" style="background:rgba(255,140,0,.12)">🔗</div>
-    <div><div style="font-size:15px;font-weight:700">Firebase Setup</div><div style="font-size:11px;color:var(--t2);margin-top:2px">Enable live sync with room codes</div></div>
   </button>
 </div>
 </div>
@@ -71,14 +77,12 @@
 
 <!-- ════════════ SCORING ════════════ -->
 <div id="pg-score" class="pg" style="flex-direction:column;gap:3px;padding:3px 0 0">
-  <!-- Timer bar -->
   <div style="padding:0 8px;flex-shrink:0">
     <div class="tbar"><div class="tfill" id="tf" style="width:100%"></div></div>
     <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);margin-top:2px">
       <span id="tl">--:--</span><span id="otl" style="color:var(--o)"></span>
     </div>
   </div>
-  <!-- Scoreboard -->
   <div style="margin:0 6px;background:rgba(255,255,255,.06);border:1px solid var(--bdr);border-radius:12px;padding:7px 10px;flex-shrink:0">
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div>
@@ -100,7 +104,6 @@
     </div>
     <div id="lb-pen" style="font-size:10px;color:var(--g);background:rgba(57,255,122,.08);border-radius:6px;padding:3px 7px;margin-top:3px;display:none"></div>
   </div>
-  <!-- Batters -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 6px;flex-shrink:0">
     <div class="bc sk">
       <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><div style="width:5px;height:5px;background:var(--g);border-radius:50%;flex-shrink:0"></div><div style="font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1" id="sn">—</div></div>
@@ -115,12 +118,10 @@
       <div style="font-size:9px;color:var(--b)" id="nssr">SR:0.0 D:0</div>
     </div>
   </div>
-  <!-- Partnership -->
   <div style="margin:0 6px;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:8px;padding:4px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
     <span style="font-size:9px;color:var(--p);font-weight:700">PARTNERSHIP</span>
     <span style="font-size:11px;font-weight:700" id="partval">0r · 0b</span>
   </div>
-  <!-- Bowler -->
   <div style="margin:0 6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,59,59,.22);border-radius:10px;padding:5px 10px;flex-shrink:0">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">
       <div><div style="font-size:10px;color:var(--r);font-weight:700" id="bwln">Bowler</div><div style="font-size:9px;color:var(--t2)" id="bwld">0-0-0-0|Eco:0.00|D:0</div></div>
@@ -128,14 +129,12 @@
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:2px;min-height:27px;align-items:center" id="curballs"><span style="font-size:10px;color:var(--t2)">No balls yet</span></div>
   </div>
-  <!-- Match code -->
+  <!-- Room code bar -->
   <div style="margin:0 6px;background:rgba(59,158,255,.08);border:1px solid rgba(59,158,255,.2);border-radius:8px;padding:4px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-    <span style="font-size:9px;color:var(--b);font-weight:700">ROOM CODE (share with viewers)</span>
+    <span style="font-size:9px;color:var(--b);font-weight:700">ROOM CODE</span>
     <span style="font-size:14px;font-weight:800;color:var(--b);letter-spacing:3px" id="matchcode">----</span>
   </div>
-  <!-- Score buttons -->
   <div class="sg" id="btns" style="margin:0 6px;flex-shrink:0"></div>
-  <!-- History -->
   <div class="hbar" id="hbar" style="margin:0 6px;flex-shrink:0" onclick="togHist()">
     <span style="font-size:10px;color:var(--t2);font-weight:600" id="hlbl">Over history</span>
     <span id="harr" style="font-size:9px;color:var(--t2)">▼</span>
@@ -157,7 +156,7 @@
   </div>
   <div style="padding:6px 10px 0;flex-shrink:0">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <div class="tabs" style="flex:1;margin-bottom:0">
+      <div class="tabs" style="flex:1;margin-bottom:0" id="vtabs">
         <div class="tab on" onclick="vTab(0)">Live</div>
         <div class="tab" onclick="vTab(1)">Scorecard</div>
         <div class="tab" onclick="vTab(2)">Leaders</div>
@@ -230,42 +229,26 @@
   <div style="height:16px"></div>
 </div>
 
-<!-- ════════════ FIREBASE SETUP ════════════ -->
-<div id="pg-fb" class="pgs">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-    <button class="btn gh" style="width:auto;padding:7px 14px;margin:0;font-size:12px" onclick="goPage('pg-home')">← Home</button>
-    <div style="font-size:16px;font-weight:700">Firebase Sync Setup</div>
-  </div>
-  <div class="card">
-    <div style="font-size:12px;color:var(--g);font-weight:700;margin-bottom:6px">Room-based sync — free ✓</div>
-    <div style="font-size:12px;color:var(--t2);line-height:1.6">Host creates a match → gets a 6-character room code → share with viewers → they join and see live updates.</div>
-  </div>
-  <div class="card">
-    <h3>5-minute setup</h3>
-    <div style="font-size:11px;color:var(--t2);line-height:2">
-      <b style="color:var(--g)">1.</b> Go to <b style="color:var(--b)">console.firebase.google.com</b><br>
-      <b style="color:var(--g)">2.</b> Add project → name it → Continue<br>
-      <b style="color:var(--g)">3.</b> Disable Google Analytics → Create<br>
-      <b style="color:var(--g)">4.</b> Build → Firestore Database → Create → Test mode<br>
-      <b style="color:var(--g)">5.</b> Project Settings (gear icon) → General → scroll to "Your apps"<br>
-      <b style="color:var(--g)">6.</b> Add Web App → copy <b>apiKey</b> and <b>projectId</b><br>
-      <b style="color:var(--g)">7.</b> Paste both below → Save<br>
-      <b style="color:var(--g)">8.</b> Also: Authentication → Sign-in → Anonymous → Enable
-    </div>
-  </div>
-  <div class="card">
-    <h3>Firebase credentials</h3>
-    <label>API Key</label>
-    <input id="fb-apikey" placeholder="AIzaSy...">
-    <label>Project ID</label>
-    <input id="fb-projectid" placeholder="myproject-abc12">
-    <button class="btn g" style="margin-top:10px" onclick="saveFBCfg()">Save &amp; Connect</button>
-    <button class="btn r" style="margin-top:6px" onclick="clearFBCfg()">Clear Config</button>
-    <div id="fb-msg" style="font-size:11px;text-align:center;margin-top:8px;color:var(--t2)"></div>
-  </div>
-  <div style="height:16px"></div>
-</div>
+</div><!-- #app -->
+<div id="toast"></div>
 
+<!-- ════════════ FLOATING ADMIN BUTTON ════════════ -->
+<button id="admin-fab" onclick="openAdminPrompt()"
+  style="position:fixed;bottom:18px;right:18px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.3);font-size:14px;cursor:pointer;z-index:888;display:flex;align-items:center;justify-content:center;transition:opacity .2s"
+  title="Admin">⚙</button>
+
+<!-- ════════════ ADMIN CODE POPUP ════════════ -->
+<div id="ov-admin" class="ov">
+  <div class="ms">
+    <h2>Admin Access</h2>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:12px">Enter the admin code to access the dashboard.</div>
+    <label>Admin code</label>
+    <input id="admin-inp" type="password" placeholder="••••••••" autocomplete="off">
+    <div id="admin-err" style="display:none;color:var(--r);font-size:12px;font-weight:700;margin-top:8px;padding:8px;background:rgba(255,59,59,.1);border-radius:8px;text-align:center"></div>
+    <button class="btn g" style="margin-top:12px" onclick="submitAdminCode()">Verify</button>
+    <button class="btn gh" style="margin-top:6px" onclick="closeAdminPrompt()">Cancel</button>
+  </div>
+</div>
 
 <!-- ════════════ MODALS ════════════ -->
 
@@ -289,7 +272,7 @@
 
 <!-- Dismissal -->
 <div id="ov-dis" class="ov"><div class="ms">
-  <h2>How was <span id="dis-nm" style="color:var(--r)"></span> dismissed?</h2>
+  <h2>How out — <span id="dis-nm" style="color:var(--r)"></span>?</h2>
   <div class="dg">
     <div class="db" onclick="pickDis(this,'Bowled')">🏏 Bowled</div>
     <div class="db" onclick="pickDis(this,'Caught')">🙌 Caught</div>
@@ -306,10 +289,10 @@
   <button class="btn g" style="margin-top:12px" onclick="confirmDis()">Confirm</button>
 </div></div>
 
-<!-- Bowled: runs off bat (almost always 0, but popup allows edge cases) -->
+<!-- Bowled bonus runs -->
 <div id="ov-bowled-extra" class="ov"><div class="ms">
   <h2>Bowled — any runs before wicket?</h2>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:4px">Usually 0. Select only if batter ran before being bowled.</div>
+  <div style="font-size:12px;color:var(--t2);margin-bottom:4px">Usually 0. Select if batter ran before being bowled.</div>
   <div class="bowled-extra-grid">
     <button class="bowled-extra-btn" onclick="cfBowledExtra(0);proceedAfterDis(G.inn[G.cur])">0</button>
     <button class="bowled-extra-btn" onclick="cfBowledExtra(1);proceedAfterDis(G.inn[G.cur])">1</button>
@@ -334,7 +317,7 @@
   <button class="btn g" style="margin-top:10px" onclick="confirmNewBwl()">Confirm</button>
 </div></div>
 
-<!-- No Ball popup -->
+<!-- No Ball -->
 <div id="ov-nb" class="ov"><div class="ms">
   <h2>No Ball — runs off bat?</h2>
   <div style="font-size:12px;color:var(--t2);margin-bottom:6px">+1 extra added automatically.</div>
@@ -349,10 +332,10 @@
   </div>
 </div></div>
 
-<!-- Wide popup (same as NB — 0,1,2,3,4) -->
+<!-- Wide -->
 <div id="ov-wd" class="ov"><div class="ms">
-  <h2>Wide — extra runs? (overthrows etc)</h2>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:6px">+1 wide added automatically. Select additional runs if overthrows etc.</div>
+  <h2>Wide — extra runs?</h2>
+  <div style="font-size:12px;color:var(--t2);margin-bottom:6px">+1 wide added automatically. Add extra runs for overthrows.</div>
   <div class="wideg">
     <button class="wideb" onclick="cfWD(0)">+0</button>
     <button class="wideb" onclick="cfWD(1)">+1</button>
@@ -362,7 +345,7 @@
   </div>
 </div></div>
 
-<!-- Leg Bye popup -->
+<!-- Leg Bye -->
 <div id="ov-lb2" class="ov"><div class="ms">
   <h2>Leg Bye — how many runs?</h2>
   <div style="font-size:12px;color:var(--t2);margin-bottom:6px">Runs go to extras, not batsman.</div>
@@ -412,13 +395,10 @@
   <button class="btn gh" style="margin-top:8px" onclick="hideOv('ov-sc')">Close</button>
 </div></div>
 
-<!-- Join viewer modal -->
+<!-- Join viewer -->
 <div id="ov-join" class="ov"><div class="ms">
   <h2>Join as Viewer</h2>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.6">
-    The host shares a <b style="color:var(--b)">6-character room code</b> from their scoring screen.<br>
-    Both devices must use the same Firebase project.
-  </div>
+  <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.6">Enter the <b style="color:var(--b)">6-character room code</b> shown on the host's screen.</div>
   <label>Room code</label>
   <input id="vcode" placeholder="e.g. AB3X7K" style="font-size:20px;text-align:center;letter-spacing:6px;text-transform:uppercase" maxlength="6">
   <button class="btn g" style="margin-top:12px" onclick="joinViewer()">Join Live</button>
@@ -428,9 +408,8 @@
 <!-- Export -->
 <div id="ov-export" class="ov"><div class="ms">
   <h2>Export Match</h2>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:4px">CSV saves to your Downloads folder.</div>
   <button class="btn g" onclick="exportCSV()">Download CSV</button>
-  <button class="btn b" style="margin-top:8px" onclick="exportTxt()">Text Summary (copy/share)</button>
+  <button class="btn b" style="margin-top:8px" onclick="exportTxt()">Text Summary</button>
   <button class="btn gh" style="margin-top:8px" onclick="hideOv('ov-export')">Cancel</button>
 </div></div>
 
@@ -441,17 +420,6 @@
   <button class="btn g" style="margin-top:8px" onclick="copySummary()">Copy to Clipboard</button>
   <button class="btn gh" style="margin-top:6px" onclick="hideOv('ov-sum')">Close</button>
 </div></div>
-
-</div><!-- #app -->
-<div id="toast"></div>
-
-<!-- ════════════ SCRIPTS — load order matters ════════════ -->
-<script src="state.js"></script>
-<script type="module" src="firebase.js"></script>
-<script src="timers.js"></script>
-<script src="scoring.js"></script>
-<script src="render.js"></script>
-<script src="main.js"></script>
 
 </body>
 </html>
